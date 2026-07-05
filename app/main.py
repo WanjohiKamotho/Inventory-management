@@ -4,8 +4,10 @@ from app.operations import (
     get_product_by_id,
     add_product,
     update_product,
-    delete_product
+    delete_product,
+    import_product
 )
+from app.external_api import fetch_product_by_barcode
 
 app = Flask(__name__)
 
@@ -28,12 +30,14 @@ def get_item(product_id):
     
     return jsonify({"error": "Product not found"}), 404
 
+
 @app.route("/inventory", methods=["POST"])
 def create_product():
     product = request.get_json()
 
     new_product=add_product(product)
     return jsonify(new_product), 201
+
 
 @app.route("/inventory/<int:product_id>", methods=["PATCH"])
 def edit_product(product_id):
@@ -46,12 +50,34 @@ def edit_product(product_id):
     
     return jsonify({"error": "Product not found"}),404
 
+
 @app.route("/inventory/<int:product_id>", methods=["DELETE"])
 def remove_item(product_id):
     deleted = delete_product(product_id)
     if deleted:
         return jsonify({"message": "Product deleted successfully"}),200
     return jsonify({"error": "Product not found"}),404
+
+
+@app.route("/search/<barcode>", methods=["GET"])
+def search_product(barcode):
+    product = fetch_product_by_barcode(barcode)
+
+    if product:
+        return jsonify(product), 200
+    
+    return jsonify({"error": "Product not found"}), 404
+
+
+@app.route("/inventory/import/<barcode>", methods=["POST"])
+def import_inventory_product(barcode):
+    product = import_product(barcode)  
+
+    if product:
+        return jsonify(product), 201
+    
+    return jsonify({"error": "Product not found"}),404
+
 
 
 if __name__ == "__main__":
